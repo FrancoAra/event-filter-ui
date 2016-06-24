@@ -1,0 +1,188 @@
+
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+
+<link rel="import" href="../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../bower_components/paper-slider/paper-slider.html">
+
+<link rel="import" href="../../bower_components/paper-styles/typography.html">
+<link rel="import" href="../../bower_components/paper-styles/color.html">
+
+<dom-module id="event-filter-ui-app">
+  <template>
+    <style>
+    :host {
+      display: block;
+      @apply(--layout-vertical);
+      @apply(--layout-center);
+    }
+
+    paper-slider {
+      --paper-slider-active-color: red;
+      --paper-slider-container-color: var(--paper-green-500);
+      --paper-slider-knob-color: var(--paper-green-500);
+    }
+
+    paper-card { margin-top: 15px; }
+
+    .color-preview { height: 20px; width: 20px; margin-right: 10px; }
+    .preview { @apply(--layout-horizontal); }
+    .green { background-color: var(--paper-green-500); }
+    .red { background-color: red; }
+    .redlight { background-color: #FFDDDD; }
+    .maxwith { width: 100%; text-align: center; }
+    .margin { margin-top: 10px; }
+    .grey-text { color: #aaa; }
+    </style>
+
+    <paper-card heading="Pagerank Filtering">
+      <div class="card-content">
+        <div><b>Max pagerank</b> {{maxRank}}</div>
+        <div class="maxwith margin"><b>Threshold slider</b></div>
+        <div class="maxwith grey-text"><i>Move the slider to the left to reduce the threshold</i></div>
+        <paper-slider class="maxwith" id="thresholdSlider" min="0" max="250" value="{{threshold}}"></paper-slider>
+
+        <div class="preview margin maxwidth">
+          <div class="color-preview green"></div>
+          <span>Passes threshold (will emit)</span>
+        </div>
+
+        <div class="preview margin maxwidth">
+          <div class="color-preview red"></div>
+          <span>High pagerank (won't emit)</span>
+        </div>
+
+        <div class="preview margin maxwidth">
+          <div class="color-preview redlight"></div>
+          <span>Low pagerank (won't emit)</span>
+        </div>
+
+        <div class="margin grey-text"><ul>
+          <li><i>Nodes are draggable</i></li>
+          <li><i>Hover nodes to see their id and pagerank value</i></li>
+          <li><i>Pagerank is normalized with max value 1</i></li>
+          <li><i>Max threshold = max pagerank</i></li>
+        </ul></div>
+        <svg id="svg"></svg>
+      </div>
+    </paper-card>
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'event-filter-ui-app',
+
+      properties: {
+        threshold: {
+          type: Number,
+          value: 250,
+          observer: 'thresholdChanged'
+        },
+        maxRank: {
+          type: Number,
+          value: 1
+        }
+      },
+
+      forceGraph: function () {
+        var self = this;
+        var width = 600,
+            height = 600;
+
+        var force = d3.layout.force()
+            .charge(-120)
+            .linkDistance(100)
+            .gravity(0.01)
+            .size([width, height]);
+
+        var svg = d3.select(this.$.svg)
+            .attr("width", width)
+            .attr("height", height);
+
+        // build the arrow.
+        svg.append("svg:defs").selectAll("marker")
+            .data(["end"])      // Different link/path types can be defined here
+          .enter().append("svg:marker")    // This section adds in the arrows
+            .attr("id", String)
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 20)
+            .attr("refY", -1.5)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto")
+          .append("svg:path")
+            .attr("d", "M0,-5L10,0L0,5");
+
+        d3.json("data/small.json", function(error, graph) {
+          if (error) throw error;
+
+          self.maxRank = graph.max;
+
+          force
+              .nodes(graph.nodes)
+              .links(graph.links)
+              .start();
+
+          var link = svg.selectAll(".link")
+              .data(graph.links)
+            .enter().append("line")
+              .attr("class", "link")
+              .style("stroke-width", function(d) { return Math.sqrt(2); })
+              .attr("marker-end", "url(#end)");
+
+          var node = svg.selectAll(".node")
+              .data(graph.nodes)
+            .enter().append("circle")
+              .attr("class", "node")
+              .attr("r", 10)
+              .style("fill", self.fillNodes(self))
+              .call(force.drag);
+
+          self.node = node;
+
+          node.append("title")
+              .text(function(d) { return d.name; });
+
+          force.on("tick", function() {
+            link.attr("x1", function(d) { return d.source.x; })
+                .attr("y1", function(d) { return d.source.y; })
+                .attr("x2", function(d) { return d.target.x; })
+                .attr("y2", function(d) { return d.target.y; });
+
+            node.attr("cx", function(d) { return d.x; })
+                .attr("cy", function(d) { return d.y; });
+          });
+
+        });
+      },
+
+      fillNodes: function (self) {
+        return function (node) {
+          var threshold = self.threshold * -1 + 250
+          if (node.metric == self.maxRank) {
+            var intensity = 0;
+          } else {
+            var intensity = (250 * node.metric / (self.maxRank)) * -1 + 250
+          }
+          if (intensity <= threshold) {
+            var color = d3.rgb(76, 175, 80);
+          } else {
+            var color = d3.rgb(255, intensity, intensity);
+          }
+          return color;
+        }
+      },
+
+      thresholdChanged: function (threshold) {
+        if (typeof this.node === "undefined") return;
+        this.node.style("fill", this.fillNodes(this));
+      },
+
+      ready: function () {
+        this.forceGraph();
+      }
+    });
+  </script>
+</dom-module>

@@ -1,0 +1,6 @@
+{
+  "name": "event-filter-ui",
+  "short_name": "event-filter-ui",
+  "start_url": "/",
+  "display": "standalone"
+}

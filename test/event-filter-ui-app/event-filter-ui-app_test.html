@@ -1,0 +1,32 @@
+<!doctype html>
+
+<html>
+  <head>
+    <title>event-filter-ui-app test</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+    <script src="../../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../../web-component-tester/browser.js"></script>
+
+    <link rel="import" href="../../src/event-filter-ui-app/event-filter-ui-app.html">
+  </head>
+  <body>
+
+    <test-fixture id="basic">
+      <template>
+        <event-filter-ui-app></event-filter-ui-app>
+      </template>
+    </test-fixture>
+
+    <script>
+      suite('event-filter-ui-app', function() {
+
+        test('instantiating the element works', function() {
+          let element = fixture('basic');
+          assert.equal(element.is, 'event-filter-ui-app');
+        });
+
+      });
+    </script>
+  </body>
+</html>
