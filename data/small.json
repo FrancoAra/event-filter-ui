@@ -1,17 +1,17 @@
 {
   "max": 0.35660568,
   "nodes":[
-    {"name":"ID: 0, Pagerank: 0.04007476","group":1, "metric": 0.04007476},
-    {"name":"ID: 1, Pagerank: 0.35660568","group":1, "metric": 0.35660568},
-    {"name":"ID: 2, Pagerank: 0.3199556","group":1, "metric": 0.3199556},
-    {"name":"ID: 3, Pagerank: 0.05492167","group":1, "metric": 0.05492167},
-    {"name":"ID: 4, Pagerank: 0.08985559","group":1, "metric": 0.08985559},
-    {"name":"ID: 5, Pagerank: 0.05492167","group":1, "metric": 0.05492167},
-    {"name":"ID: 6, Pagerank: 0.016733048","group":1, "metric": 0.016733048},
-    {"name":"ID: 7, Pagerank: 0.016733048","group":1, "metric": 0.016733048},
-    {"name":"ID: 8, Pagerank: 0.016733048","group":1, "metric": 0.016733048},
-    {"name":"ID: 9, Pagerank: 0.016733048","group":1, "metric": 0.016733048},
-    {"name":"ID: 10, Pagerank: 0.016733048","group":1, "metric": 0.016733048}
+    {"name":"ID: 0","group":1, "metric": 0.04007476},
+    {"name":"ID: 1","group":1, "metric": 0.35660568},
+    {"name":"ID: 2","group":1, "metric": 0.3199556},
+    {"name":"ID: 3","group":1, "metric": 0.05492167},
+    {"name":"ID: 4","group":1, "metric": 0.08985559},
+    {"name":"ID: 5","group":1, "metric": 0.05492167},
+    {"name":"ID: 6","group":1, "metric": 0.016733048},
+    {"name":"ID: 7","group":1, "metric": 0.016733048},
+    {"name":"ID: 8","group":1, "metric": 0.016733048},
+    {"name":"ID: 9","group":1, "metric": 0.016733048},
+    {"name":"ID: 10","group":1, "metric": 0.016733048}
   ],
   "links":[
     {"source":3,"target":0},

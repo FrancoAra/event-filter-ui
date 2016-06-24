@@ -5,6 +5,7 @@
 
 <link rel="import" href="../../bower_components/paper-card/paper-card.html">
 <link rel="import" href="../../bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="../../bower_components/file-upload/file-upload.html">
 
 <link rel="import" href="../../bower_components/paper-styles/typography.html">
 <link rel="import" href="../../bower_components/paper-styles/color.html">
@@ -24,49 +25,99 @@
       --paper-slider-knob-color: var(--paper-green-500);
     }
 
-    paper-card { margin-top: 15px; }
+    paper-card { margin-top: 15px; width: 650px; }
 
-    .color-preview { height: 20px; width: 20px; margin-right: 10px; }
-    .preview { @apply(--layout-horizontal); }
+    .center-layout { @apply(--layout-vertical); @apply(--layout-center); }
+    .maxwith { width: 100%; text-align: center; }
+    .margin { margin-top: 10px; }
+    .grey-text { color: #777; }
+
+    ul { margin: 0px; padding-left: 30px; }
+    .color-info { height: 15px; width: 15px; margin-right: 10px; border-radius: 30px; }
+    .info { @apply(--layout-horizontal); }
     .green { background-color: var(--paper-green-500); }
     .red { background-color: red; }
     .redlight { background-color: #FFDDDD; }
-    .maxwith { width: 100%; text-align: center; }
-    .margin { margin-top: 10px; }
-    .grey-text { color: #aaa; }
+    .graph-wrapper { position: relative; }
+    .graph-info {
+      position: absolute;
+      text-align: right;
+      font-size: 12px;
+      width: 200px;
+      bottom: 0;
+      right: 0;
+    }
+    .graph-notes {
+      position: absolute;
+      font-size: 12px;
+      bottom: 0;
+      left: 0;
+    }
+
+    .upload-info { @apply(--layout-horizontal); @apply(--layout-center); }
+    file-upload { margin-top: 30px; }
     </style>
 
-    <paper-card heading="Pagerank Filtering">
+    <paper-card heading="Pagerank event filter visualization">
       <div class="card-content">
-        <div><b>Max pagerank</b> {{maxRank}}</div>
-        <div class="maxwith margin"><b>Threshold slider</b></div>
+
+        <div class="maxwith margin">Threshold slider</div>
         <div class="maxwith grey-text"><i>Move the slider to the left to reduce the threshold</i></div>
         <paper-slider class="maxwith" id="thresholdSlider" min="0" max="250" value="{{threshold}}"></paper-slider>
 
-        <div class="preview margin maxwidth">
-          <div class="color-preview green"></div>
-          <span>Passes threshold (will emit)</span>
-        </div>
+        <div class="graph-wrapper">
+          <div class="graph-info grey-text">
+            <div class="info margin maxwidth">
+              <span class="maxwith">Passes threshold (will emit)</span>
+              <div class="color-info green"></div>
+            </div>
 
-        <div class="preview margin maxwidth">
-          <div class="color-preview red"></div>
-          <span>High pagerank (won't emit)</span>
-        </div>
+            <div class="info margin maxwidth">
+              <span class="maxwith">High pagerank (won't emit)</span>
+              <div class="color-info red"></div>
+            </div>
 
-        <div class="preview margin maxwidth">
-          <div class="color-preview redlight"></div>
-          <span>Low pagerank (won't emit)</span>
-        </div>
+            <div class="info margin maxwidth">
+              <span class="maxwith">Low pagerank (won't emit)</span>
+              <div class="color-info redlight"></div>
+            </div>
+          </div>
 
-        <div class="margin grey-text"><ul>
-          <li><i>Nodes are draggable</i></li>
-          <li><i>Hover nodes to see their id and pagerank value</i></li>
-          <li><i>Pagerank is normalized with max value 1</i></li>
-          <li><i>Max threshold = max pagerank</i></li>
-        </ul></div>
-        <svg id="svg"></svg>
+          <div class="graph-notes margin grey-text"><ul>
+            <li><i>Nodes are draggable</i></li>
+            <li><i>Hover nodes to see their id and pagerank value</i></li>
+            <li><i>Pagerank is normalized with max value 1</i></li>
+            <li><i>Max threshold = max pagerank</i></li>
+          </ul></div>
+          <svg id="svg"></svg>
+        </div>
       </div>
     </paper-card>
+
+    <paper-card heading="Upload component dependency graph CSV">
+      <div class="card-content">
+        <div class="upload-info">
+          <div class="grey-text">
+            <i>Headerless CSV file representing directed links between nodes with integer ids in sequence.</i>
+          </div>
+          <div class="grey-text maxwith">
+            <i>&lt;source&gt;,&lt;destination&gt;</i></br>
+            <i> Example:</i>
+            <div>0,1</div>
+            <div>1,0</div>
+            <div>2,0</div>
+          </div>
+        </div>
+        <file-upload
+          class="center-layout"
+          target="http://localhost:9000/upload"
+          method="POST"
+          droppable
+          raised
+          accept="csv">Choose file</file-upload>
+      </div>
+    </paper-card>
+
   </template>
 
   <script>
@@ -77,13 +128,17 @@
       properties: {
         threshold: {
           type: Number,
-          value: 250,
+          value: 241,
           observer: 'thresholdChanged'
         },
         maxRank: {
           type: Number,
           value: 1
         }
+      },
+
+      listeners: {
+        "success": "fileUploaded"
       },
 
       forceGraph: function () {
@@ -143,7 +198,9 @@
           self.node = node;
 
           node.append("title")
-              .text(function(d) { return d.name; });
+              .text(function(d) {
+                return (d.name + ", Pagerank: " + (Math.round(d.metric * 100) / 100));
+              });
 
           force.on("tick", function() {
             link.attr("x1", function(d) { return d.source.x; })
@@ -160,11 +217,11 @@
 
       fillNodes: function (self) {
         return function (node) {
-          var threshold = self.threshold * -1 + 250
+          var threshold = self.threshold * -1 + 240
           if (node.metric == self.maxRank) {
             var intensity = 0;
           } else {
-            var intensity = (250 * node.metric / (self.maxRank)) * -1 + 250
+            var intensity = (240 * node.metric / (self.maxRank)) * -1 + 240
           }
           if (intensity <= threshold) {
             var color = d3.rgb(76, 175, 80);
@@ -178,6 +235,11 @@
       thresholdChanged: function (threshold) {
         if (typeof this.node === "undefined") return;
         this.node.style("fill", this.fillNodes(this));
+      },
+
+      fileUploaded: function (event) {
+        var response = JSON.parse(event.detail.xhr.response);
+        console.log(response);
       },
 
       ready: function () {
